@@ -68,16 +68,14 @@ def update_model(model, text):
     canvas.itemconfig(current_model_text, text=text)
 
 svm_model = None
-with open(f'./models/svm_model_0.8678.pkl', 'rb') as file:
+with open(f'../models/svm_model_0.8678.pkl', 'rb') as file:
     svm_model = pickle.load(file)
 
 rf_model = None
-with open(f'./models/rf_model_0.8368.pkl', 'rb') as file:
+with open(f'../models/rf_model_0.8368.pkl', 'rb') as file:
     rf_model = pickle.load(file)
 
-cnn_model = None
-with open(f'models/rf_model_0.8368.pkl', 'rb') as file:
-    cnn_model = load_model('./models/cnn_model_9814_with_detect.h5')
+cnn_model = load_model('../models/cnn_model_9814_with_detect.h5')
 
 current_model = svm_model
 
