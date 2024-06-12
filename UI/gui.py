@@ -1,11 +1,14 @@
 from pathlib import Path
 from tkinter import Tk, Canvas, Button, filedialog
 from PIL import Image, ImageTk
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
 import pickle
 import cv2
 import numpy as np
 
 sz = 28
+hiragana = "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path(r"./assets/frame0")
@@ -42,11 +45,21 @@ def data_preprocessing(img, target_size=(sz, sz)):
     return resized_img
 
 def predict(img):
-    x_pred = np.array([np.array(img)])
-    x_pred = x_pred.reshape(x_pred.shape[0], -1)
-    y_pred = current_model.predict(x_pred)
-    # print(f'Predict: {y_pred[0]}')
-    canvas.itemconfig(predict_text, text=f'Predict: {y_pred[0]}')
+    y_pred = -1
+    if current_model != cnn_model:
+        x_pred = np.array([np.array(img)])
+        x_pred = x_pred.reshape(x_pred.shape[0], -1)
+        y_pred = current_model.predict(x_pred)
+    else:
+        x_pred = img_to_array(img)
+        x_pred = x_pred / 255.0  # 進行 rescale
+        x_pred = np.expand_dims(x_pred, axis=0)  # 增加一個維度以符合模型的輸入要求
+
+        pred = current_model.predict(x_pred)
+        print(f'Predict: {pred[0]}')
+        y_pred = np.argmax(pred, axis=1)
+
+    canvas.itemconfig(predict_text, text=f'Predict: {y_pred[0]}, {hiragana[y_pred[0]]}')
     return
 
 def update_model(model, text):
@@ -55,16 +68,16 @@ def update_model(model, text):
     canvas.itemconfig(current_model_text, text=text)
 
 svm_model = None
-with open(f'models/svm_model_0.8678.pkl', 'rb') as file:
+with open(f'./models/svm_model_0.8678.pkl', 'rb') as file:
     svm_model = pickle.load(file)
 
 rf_model = None
-with open(f'models/rf_model_0.8368.pkl', 'rb') as file:
+with open(f'./models/rf_model_0.8368.pkl', 'rb') as file:
     rf_model = pickle.load(file)
 
 cnn_model = None
 with open(f'models/rf_model_0.8368.pkl', 'rb') as file:
-    cnn_model = pickle.load(file)
+    cnn_model = load_model('./models/cnn_model_9814_with_detect.h5')
 
 current_model = svm_model
 
@@ -182,10 +195,10 @@ current_model_text = canvas.create_text(
 )
 
 predict_text = canvas.create_text(
-    239.0,
+    190.0,
     595.0,
     anchor="nw",
-    text="Predict: 1",
+    text="Predict:",
     fill="#005384",
     font=("Quantico", 48 * -1)
 )
